@@ -14,7 +14,7 @@ import time
 source_url = 'https://gasprices.aaa.com/state-gas-price-averages/'
 attr = ['data_date', 'state', 'regular_usd', 'mid_grade_usd', 'premium_usd', 'diesel_usd']
 csv_file = './usa_gas_prices.csv'
-log_file = '/usa_gas_prices_etl_log.txt'
+log_file = './usa_gas_prices_etl_log.txt'
 database_name = './usa_gas_prices.db'
 table_name = 'daily_gas_prices'
 conn = sqlite3.connect(database_name)
@@ -170,5 +170,7 @@ load_sql(df, table_name, conn)
 log('Loading Process Ended')
 log('ETL Process Completed Successfully')
 
+df = t_rankedPrices(table_name, conn)
+print(df)
 
 conn.close()
