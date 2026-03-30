@@ -121,19 +121,18 @@ def t_priceChange7d(table_name, conn):
     df = pd.read_sql(query_stmnt, conn)
     return df
 
-def t_rankedPrices(df):
-    rank = df.sort_values('regular_usd', ascending=False)
+def t_ranked(df):
+    rank = df.sort_values('regular_usd', ascending=False).reset_index(drop=True)
+    rank.index += 1
     return rank
 
-def t_rankedIncrease(df):
-    rank = df.sort_values('regular_usd', ascending=False)
-    return rank
 
 
 #################### Load Functions ####################
 
 def load_csv(df):
-    df.to_csv(csv_file, index = False)
+    df.to_csv(csv_file, mode='a', header=False, index=False)
+    
 
 def load_sql(df, table_name, conn):
     df.to_sql(table_name, conn, if_exists='append', index = False)
@@ -153,7 +152,7 @@ def log(message):
 
 
 #################### Excecution ####################
-
+'''
 log('ETL Process Started')
 log('Extraction Process Started')
 df = extract()
@@ -169,8 +168,6 @@ log('Loading to Database')
 load_sql(df, table_name, conn)
 log('Loading Process Ended')
 log('ETL Process Completed Successfully')
-
-df = t_rankedPrices(table_name, conn)
-print(df)
+'''
 
 conn.close()
