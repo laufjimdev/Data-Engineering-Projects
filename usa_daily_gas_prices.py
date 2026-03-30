@@ -152,22 +152,27 @@ def log(message):
 
 
 #################### Excecution ####################
-'''
-log('ETL Process Started')
-log('Extraction Process Started')
-df = extract()
-log('Extraction Process Ended')
-log('Transformation Process Started')
-log('Cleaning data')
-df = t_cleanPrices(df)
-log('Transformation Process Ended')
-log('Loading Process Started')
-log('Loading CSV File')
-load_csv(df)
-log('Loading to Database')
-load_sql(df, table_name, conn)
-log('Loading Process Ended')
-log('ETL Process Completed Successfully')
-'''
 
-conn.close()
+try:
+    '''
+    log('ETL Process Started')
+    log('Extraction Process Started')
+    df = extract()
+    log('Extraction Process Ended')
+    log('Transformation Process Started')
+    log('Cleaning data')
+    df = t_cleanPrices(df)
+    log('Transformation Process Ended')
+    log('Loading Process Started')
+    log('Loading CSV File')
+    load_csv(df)
+    log('Loading to Database')
+    load_sql(df, table_name, conn)
+    log('Loading Process Ended')
+    log('ETL Process Completed Successfully')
+    '''
+
+except Exception as e:
+    print(f"Something went wrong, Error: {e}")
+finally:
+    conn.close()
