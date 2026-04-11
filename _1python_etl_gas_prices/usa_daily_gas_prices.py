@@ -154,7 +154,7 @@ def log(message):
 #################### Excecution ####################
 
 try:
-    '''
+
     log('ETL Process Started')
     log('Extraction Process Started')
     df = extract()
@@ -170,9 +170,10 @@ try:
     load_sql(df, table_name, conn)
     log('Loading Process Ended')
     log('ETL Process Completed Successfully')
-    '''
+
 
 except Exception as e:
+    log(f'ETL Process Failed: {e}')
     print(f"Something went wrong, Error: {e}")
 finally:
     conn.close()

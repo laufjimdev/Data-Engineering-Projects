@@ -9,3 +9,14 @@
 2026-03-29 19:53:54, Loading to Database
 2026-03-29 19:53:54, Loading Process Ended
 2026-03-29 19:53:54, ETL Process Completed Successfully
+2026-03-30 22:01:21, ETL Process Started
+2026-03-30 22:01:21, Extraction Process Started
+2026-03-30 22:01:41, Extraction Process Ended
+2026-03-30 22:01:41, Transformation Process Started
+2026-03-30 22:01:41, Cleaning data
+2026-03-30 22:01:41, Transformation Process Ended
+2026-03-30 22:01:41, Loading Process Started
+2026-03-30 22:01:41, Loading CSV File
+2026-03-30 22:01:41, Loading to Database
+2026-03-30 22:01:41, Loading Process Ended
+2026-03-30 22:01:41, ETL Process Completed Successfully
