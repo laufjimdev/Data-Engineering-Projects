@@ -20,7 +20,7 @@ time_stamp=$(date +"%Y-%m-%d %H:%M:%S")
 #### LOAD ####
 DB='/Users/lauradev/Desktop/Data Engineering Projects/03bash_project_weather_info_etl/weather.db'
 
-sqlite3 $DB << EOF
+sqlite3 "$DB" << EOF
 CREATE TABLE IF NOT EXISTS weather_predictions (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     time_stamp  DATETIME,
