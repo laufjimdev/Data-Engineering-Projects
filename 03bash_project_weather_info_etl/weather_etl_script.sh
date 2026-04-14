@@ -32,12 +32,45 @@ CREATE TABLE IF NOT EXISTS weather_predictions (
 
 INSERT INTO weather_predictions (time_stamp, morning_temp_f, noon_temp_f, evening_temp_f, night_temp_f)
 VALUES ('$time_stamp', '$morning_temp', '$noon_temp', '$evening_temp', '$night_temp');
+
+CREATE TABLE IF NOT EXISTS weather_actuals (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    date                DATE,
+    real_morning_temp_f REAL,
+    morning_timestamp   DATETIME,
+    real_noon_temp_f    REAL,
+    noon_timestamp      DATETIME,
+    real_evening_temp_f REAL,
+    evening_timestamp   DATETIME,
+    real_night_temp_f   REAL,
+    night_timestamp     DATETIME
+);
+
+INSERT INTO weather_actuals (date)
+VALUES (date('$time_stamp'));
 EOF
 
-echo "Inserted: $time_stamp | morning: $morning_temp | noon: $noon_temp | evening: $evening_temp | night: $night_temp"
+#current temperature
+curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
+curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json)
+local_time1=$(curl -s "wttr.in/new+york?format=%T" | cut -c1-2)
+time_stamp1=$(date +"%Y-%m-%d %H:%M:%S")
 
-#Parsing the data
-curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json) 
+if [[ $local_time1 == 06 ]]
+then
+    sqlite3 "$DB" "UPDATE weather_actuals SET real_morning_temp_f = '$curr_temp', morning_timestamp = '$time_stamp1' WHERE date = date('$time_stamp1');"
+elif [[ $local_time1 == 12 ]]
+then
+    sqlite3 "$DB" "UPDATE weather_actuals SET real_noon_temp_f = '$curr_temp', noon_timestamp = '$time_stamp1' WHERE date = date('$time_stamp1');"
+elif [[ $local_time1 == 18 ]]
+then
+    sqlite3 "$DB" "UPDATE weather_actuals SET real_evening_temp_f = '$curr_temp', evening_timestamp = '$time_stamp1' WHERE date = date('$time_stamp1');"
+elif [[ $local_time1 == 21 ]]
+then
+    sqlite3 "$DB" "UPDATE weather_actuals SET real_night_temp_f = '$curr_temp', night_timestamp = '$time_stamp1' WHERE date = date('$time_stamp1');"
+fi
+
+
 
 
 
