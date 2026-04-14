@@ -30,12 +30,9 @@ CREATE TABLE IF NOT EXISTS weather_predictions (
     night_temp_f  REAL
 );
 
-INSERT INTO weather_predictions (time_stamp, morning_temp_f, noon_temp_f, evening_temp_f, night_temp_f)
-VALUES ('$time_stamp', '$morning_temp', '$noon_temp', '$evening_temp', '$night_temp');
-
 CREATE TABLE IF NOT EXISTS weather_actuals (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    date                DATE,
+    date                DATE UNIQUE,
     real_morning_temp_f REAL,
     morning_timestamp   DATETIME,
     real_noon_temp_f    REAL,
@@ -46,14 +43,35 @@ CREATE TABLE IF NOT EXISTS weather_actuals (
     night_timestamp     DATETIME
 );
 
-INSERT INTO weather_actuals (date)
+CREATE TABLE IF NOT EXISTS predictions_errors (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    date                DATE UNIQUE,
+    morning_error       REAL,
+    noon_error          REAL,
+    evening_error       REAL,
+    night_error         REAL,
+    daily_error         REAL
+);
+
+
+INSERT INTO weather_predictions 
+(time_stamp, morning_temp_f, noon_temp_f, evening_temp_f, night_temp_f)
+VALUES 
+('$time_stamp', '$morning_temp', '$noon_temp', '$evening_temp', '$night_temp');
+
+
+INSERT OR IGNORE INTO weather_actuals (date)
+VALUES (date('$time_stamp'));
+
+INSERT OR IGNORE INTO predictions_errors (date)
 VALUES (date('$time_stamp'));
 EOF
 
-#current temperature
+#### EXTRACTION ####
+#Actual temperatures
 curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
 curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json)
-local_time1=$(curl -s "wttr.in/new+york?format=%T" | cut -c1-2)
+local_time1=$(curl -s "wttr.in/$loc_1?format=%T" | cut -c1-2)
 time_stamp1=$(date +"%Y-%m-%d %H:%M:%S")
 
 if [[ $local_time1 == 06 ]]
@@ -68,7 +86,60 @@ then
 elif [[ $local_time1 == 21 ]]
 then
     sqlite3 "$DB" "UPDATE weather_actuals SET real_night_temp_f = '$curr_temp', night_timestamp = '$time_stamp1' WHERE date = date('$time_stamp1');"
+
+    #### TRANSFORM ####
+    #### LOAD ####
+    ###Loading predictions errors
+    sqlite3 "$DB" "UPDATE predictions_errors
+    SET
+        morning_error = sub.morning_error,
+        noon_error    = sub.noon_error,
+        evening_error = sub.evening_error,
+        night_error   = sub.night_error,
+        daily_error   = sub.daily_error
+    FROM (
+        SELECT 
+            a.date,
+
+            a.real_morning_temp_f - p.morning_temp_f AS morning_error,
+            a.real_noon_temp_f    - p.noon_temp_f    AS noon_error,
+            a.real_evening_temp_f - p.evening_temp_f AS evening_error,
+            a.real_night_temp_f   - p.night_temp_f   AS night_error,
+
+            (
+                ABS(a.real_morning_temp_f - p.morning_temp_f) +
+                ABS(a.real_noon_temp_f    - p.noon_temp_f) +
+                ABS(a.real_evening_temp_f - p.evening_temp_f) +
+                ABS(a.real_night_temp_f   - p.night_temp_f)
+            ) / 4.0 AS daily_error
+
+        FROM weather_actuals a
+
+        JOIN (
+            -- ensure ONE prediction row per day
+            SELECT 
+                date(time_stamp) AS p_date,
+                AVG(morning_temp_f) AS morning_temp_f,
+                AVG(noon_temp_f)    AS noon_temp_f,
+                AVG(evening_temp_f) AS evening_temp_f,
+                AVG(night_temp_f)   AS night_temp_f
+            FROM weather_predictions
+            GROUP BY date(time_stamp)
+        ) p
+        ON a.date = p.p_date
+
+        -- 🚨 guard: only compute if all actuals exist
+        WHERE 
+            a.real_morning_temp_f IS NOT NULL AND
+            a.real_noon_temp_f IS NOT NULL AND
+            a.real_evening_temp_f IS NOT NULL AND
+            a.real_night_temp_f IS NOT NULL
+
+    ) AS sub
+    WHERE predictions_errors.date = sub.date
+    AND predictions_errors.date = date('$time_stamp1');"
 fi
+
 
 
 
