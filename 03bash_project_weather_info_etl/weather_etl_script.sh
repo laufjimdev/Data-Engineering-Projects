@@ -3,9 +3,9 @@
 #### EXTRACTION ####
 
 loc_1="New+York"
-#local_time=$(curl -s "wttr.in/new+york?format=%T" | cut -c1-2)
-#if [[ $local_time == 0 ]]
-#
+loc1_time=$(TZ="America/New_York" date +"%H")
+if [[ $loc1_time == 0 ]]
+
 curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
 
 
@@ -67,7 +67,7 @@ VALUES (date('$time_stamp'));
 INSERT OR IGNORE INTO predictions_errors (date)
 VALUES (date('$time_stamp'));
 EOF
-#fi
+fi
 
 #### EXTRACTION ####
 #Actual temperatures
