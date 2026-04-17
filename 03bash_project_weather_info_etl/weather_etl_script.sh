@@ -7,7 +7,7 @@ loc_1="New+York"
 #if [[ $local_time == 0 ]]
 #
 curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
-#fi
+
 
 #New York
 morning_temp=$(jq -r '.weather[0].hourly[2].tempF' weather_new_york.json)
@@ -23,7 +23,8 @@ DB='/Users/lauradev/Desktop/Data Engineering Projects/03bash_project_weather_inf
 sqlite3 "$DB" << EOF
 CREATE TABLE IF NOT EXISTS weather_predictions (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    time_stamp  DATETIME,
+    date        DATE UNIQUE,
+    created_at  DATETIME,
     morning_temp_f REAL,
     noon_temp_f   REAL,
     evening_temp_f REAL,
@@ -54,10 +55,10 @@ CREATE TABLE IF NOT EXISTS predictions_errors (
 );
 
 
-INSERT INTO weather_predictions 
-(time_stamp, morning_temp_f, noon_temp_f, evening_temp_f, night_temp_f)
+INSERT OR IGNORE INTO weather_predictions 
+(date, created_at, morning_temp_f, noon_temp_f, evening_temp_f, night_temp_f)
 VALUES 
-('$time_stamp', '$morning_temp', '$noon_temp', '$evening_temp', '$night_temp');
+(date('$time_stamp'),'$time_stamp', '$morning_temp', '$noon_temp', '$evening_temp', '$night_temp');
 
 
 INSERT OR IGNORE INTO weather_actuals (date)
@@ -66,6 +67,7 @@ VALUES (date('$time_stamp'));
 INSERT OR IGNORE INTO predictions_errors (date)
 VALUES (date('$time_stamp'));
 EOF
+#fi
 
 #### EXTRACTION ####
 #Actual temperatures
@@ -139,10 +141,3 @@ then
     WHERE predictions_errors.date = sub.date
     AND predictions_errors.date = date('$time_stamp1');"
 fi
-
-
-
-
-
-
-
