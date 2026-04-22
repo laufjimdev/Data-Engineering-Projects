@@ -94,6 +94,10 @@ This project was written independently as a hands-on exercise to practice Bash s
 
 ---
 
+## 🙏 Acknowledgements
+
+Weather data provided by [wttr.in](https://wttr.in) — an open source weather service by [Igor Chubin](https://github.com/chubin/wttr.in).
+
 ## 👩‍💻 Author
 
 Laura Jimenez
