@@ -5,21 +5,30 @@
 loc_1="New+York"
 loc1_time=$(TZ="America/New_York" date +"%H")
 time_stamp=$(date +"%Y-%m-%d %H:%M:%S")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DB="$SCRIPT_DIR/weather.db"
 
 if [[ $loc1_time == 0 ]];
 then
     echo "$time_stamp, ETL Process Started" >> logs.csv
 
+    ### API fetch failure handler
     MAX_ATTEMPTS=3
     for attempt in $(seq 1 $MAX_ATTEMPTS); do
         curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json && break
         echo "$time_stamp, EXTRACTION warning (attempt $attempt of $MAX_ATTEMPTS failed)" >> logs.csv
         sleep 5
     done
-
+    
     if [[ $attempt == $MAX_ATTEMPTS ]]; then
         echo "$time_stamp, EXTRACTION failed (all retries exhausted)" >> logs.csv
         exit 1
+    fi
+
+    ### Data malformation handler
+    if ! jq empty weather_new_york.json 2>/dev/null; then
+    echo "$time_stamp, EXTRACTION failed (invalid JSON response)" >> logs.csv
+    exit 1
     fi
 
     echo "$time_stamp,EXTRACTION success (fetched weather data)" >> logs.csv
@@ -30,9 +39,6 @@ then
     night_temp=$(jq -r '.weather[0].hourly[7].tempF' weather_new_york.json)
 
     #### LOAD ####
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    DB="$SCRIPT_DIR/weather.db"
-
     sqlite3 "$DB" << EOF
     CREATE TABLE IF NOT EXISTS weather_predictions (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,6 +93,8 @@ fi
 #Actual temperatures
 if [[ $loc1_time != 0 ]];
 then
+
+    ### API fetch failure handler
     MAX_RETRIES=3
     for attempt in $(seq 1 $MAX_RETRIES); do
         curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json && break
@@ -98,6 +106,13 @@ then
         echo "$time_stamp, EXTRACTION failed (all retries exhausted)" >> logs.csv
         exit 1
     fi
+
+    ### Data malformation handler
+    if ! jq empty weather_new_york.json 2>/dev/null; then
+    echo "$time_stamp, EXTRACTION failed (invalid JSON response)" >> logs.csv
+    exit 1
+    fi
+
     echo "$time_stamp, EXTRACTION success (fetched weather data)" >> logs.csv
     curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json)
 
@@ -159,6 +174,5 @@ then
         AND predictions_errors.date = date('$time_stamp');"
         echo "$time_stamp, LOADING success (transformed and loaded prediction errors data)" >> logs.csv
     fi
-    echo "$time_stamp, LOADING success (loaded current evening temperature)" >> logs.csv
     echo "$time_stamp, ETL Process Ended" >> logs.csv
 fi

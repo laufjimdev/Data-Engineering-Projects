@@ -84,7 +84,6 @@ Each API request is wrapped in a retry loop with up to 3 attempts and a 5-second
 - **Requires the computer to be on** — cron jobs do not run if the machine is off or asleep. Any missed scheduled execution is lost with no catchup. A cloud VM would be needed for a reliable production setup.
 - **Single city** — the pipeline is currently scoped to New York City only.
 - **Time-sensitive design** — the pipeline depends on being triggered at exact hours. If a cron job runs late or is skipped, that data window will be missing.
-- **No data validation on API response** — if the API returns malformed or unexpected JSON, `jq` will silently write null values into the database.
 - **Local storage only** — data lives in a local SQLite file with no backups or replication.
 
 ---
