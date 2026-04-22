@@ -9,7 +9,19 @@ time_stamp=$(date +"%Y-%m-%d %H:%M:%S")
 if [[ $loc1_time == 0 ]];
 then
     echo "$time_stamp, ETL Process Started" >> logs.csv
-    curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
+
+    MAX_ATTEMPTS=3
+    for attempt in $(seq 1 $MAX_ATTEMPTS); do
+        curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json && break
+        echo "$time_stamp, EXTRACTION warning (attempt $attempt of $MAX_ATTEMPTS failed)" >> logs.csv
+        sleep 5
+    done
+
+    if [[ $attempt == $MAX_ATTEMPTS ]]; then
+        echo "$time_stamp, EXTRACTION failed (all retries exhausted)" >> logs.csv
+        exit 1
+    fi
+
     echo "$time_stamp,EXTRACTION success (fetched weather data)" >> logs.csv
     #New York
     morning_temp=$(jq -r '.weather[0].hourly[2].tempF' weather_new_york.json)
@@ -74,9 +86,19 @@ fi
 #Actual temperatures
 if [[ $loc1_time != 0 ]];
 then
-    curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
-    curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json)
+    MAX_RETRIES=3
+    for attempt in $(seq 1 $MAX_RETRIES); do
+        curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json && break
+        echo "$time_stamp, EXTRACTION warning (attempt $attempt of $MAX_RETRIES failed)" >> logs.csv
+        sleep 5
+    done
+
+    if [[ $attempt == $MAX_RETRIES ]]; then
+        echo "$time_stamp, EXTRACTION failed (all retries exhausted)" >> logs.csv
+        exit 1
+    fi
     echo "$time_stamp, EXTRACTION success (fetched weather data)" >> logs.csv
+    curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json)
 
     if [[ $loc1_time == 06 ]];
     then
