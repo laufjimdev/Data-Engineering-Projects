@@ -5,11 +5,12 @@
 loc_1="New+York"
 loc1_time=$(TZ="America/New_York" date +"%H")
 time_stamp=$(date +"%Y-%m-%d %H:%M:%S")
+
 if [[ $loc1_time == 0 ]];
 then
-
+    echo "$time_stamp, ETL Process Started" >> logs.csv
     curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
-
+    echo "$time_stamp,EXTRACTION success (fetched weather data)" >> logs.csv
     #New York
     morning_temp=$(jq -r '.weather[0].hourly[2].tempF' weather_new_york.json)
     noon_temp=$(jq -r '.weather[0].hourly[4].tempF' weather_new_york.json)
@@ -66,6 +67,7 @@ then
     INSERT OR IGNORE INTO predictions_errors (date)
     VALUES (date('$time_stamp'));
 EOF
+    echo "$time_stamp, LOADING success (loaded predictions data)" >> logs.csv
 fi
 
 #### EXTRACTION ####
@@ -74,19 +76,24 @@ if [[ $loc1_time != 0 ]];
 then
     curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json
     curr_temp=$(jq -r '.current_condition[0].temp_F' weather_new_york.json)
+    echo "$time_stamp, EXTRACTION success (fetched weather data)" >> logs.csv
 
     if [[ $loc1_time == 06 ]];
     then
         sqlite3 "$DB" "UPDATE weather_actuals SET real_morning_temp_f = '$curr_temp', morning_timestamp = '$time_stamp' WHERE date = date('$time_stamp');"
+        echo "$time_stamp, LOADING success (loaded current morning temperature)" >> logs.csv
     elif [[ $loc1_time == 12 ]];
     then
         sqlite3 "$DB" "UPDATE weather_actuals SET real_noon_temp_f = '$curr_temp', noon_timestamp = '$time_stamp' WHERE date = date('$time_stamp');"
+        echo "$time_stamp, LOADING success (loaded current noon temperature)" >> logs.csv
     elif [[ $loc1_time == 18 ]];
     then
         sqlite3 "$DB" "UPDATE weather_actuals SET real_evening_temp_f = '$curr_temp', evening_timestamp = '$time_stamp' WHERE date = date('$time_stamp');"
+        echo "$time_stamp, LOADING success (loaded current evening temperature)" >> logs.csv
     elif [[ $loc1_time == 21 ]];
     then
         sqlite3 "$DB" "UPDATE weather_actuals SET real_night_temp_f = '$curr_temp', night_timestamp = '$time_stamp' WHERE date = date('$time_stamp');"
+        echo "$time_stamp, LOADING success (loaded current night temperature)" >> logs.csv
 
         #### TRANSFORM ####
         #### LOAD ####
@@ -116,19 +123,7 @@ then
 
             FROM weather_actuals a
 
-            JOIN (
-                -- ensure ONE prediction row per day
-                SELECT 
-                    date(time_stamp) AS p_date,
-                    AVG(morning_temp_f) AS morning_temp_f,
-                    AVG(noon_temp_f)    AS noon_temp_f,
-                    AVG(evening_temp_f) AS evening_temp_f,
-                    AVG(night_temp_f)   AS night_temp_f
-                FROM weather_predictions
-                GROUP BY date(time_stamp)
-            ) p
-            ON a.date = p.p_date
-
+            JOIN weather_predictions p ON a.date = p.date
             -- 🚨 guard: only compute if all actuals exist
             WHERE 
                 a.real_morning_temp_f IS NOT NULL AND
@@ -139,5 +134,8 @@ then
         ) AS sub
         WHERE predictions_errors.date = sub.date
         AND predictions_errors.date = date('$time_stamp');"
+        echo "$time_stamp, LOADING success (transformed and loaded prediction errors data)" >> logs.csv
     fi
+    echo "$time_stamp, LOADING success (loaded current evening temperature)" >> logs.csv
+    echo "$time_stamp, ETL Process Ended" >> logs.csv
 fi
