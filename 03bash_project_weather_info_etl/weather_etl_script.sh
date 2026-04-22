@@ -30,7 +30,8 @@ then
     night_temp=$(jq -r '.weather[0].hourly[7].tempF' weather_new_york.json)
 
     #### LOAD ####
-    DB='/Users/lauradev/Desktop/Data Engineering Projects/03bash_project_weather_info_etl/weather.db'
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    DB="$SCRIPT_DIR/weather.db"
 
     sqlite3 "$DB" << EOF
     CREATE TABLE IF NOT EXISTS weather_predictions (
