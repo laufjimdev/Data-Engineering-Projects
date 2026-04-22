@@ -13,14 +13,19 @@ then
     echo "$time_stamp, ETL Process Started" >> logs.csv
 
     ### API fetch failure handler
-    MAX_ATTEMPTS=3
+    success=false
+
     for attempt in $(seq 1 $MAX_ATTEMPTS); do
-        curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json && break
+        if curl -sf "wttr.in/$loc_1?format=j1" -o weather_new_york.json; then
+            success=true
+            break
+        fi
+
         echo "$time_stamp, EXTRACTION warning (attempt $attempt of $MAX_ATTEMPTS failed)" >> logs.csv
         sleep 5
     done
-    
-    if [[ $attempt == $MAX_ATTEMPTS ]]; then
+
+    if [[ "$success" = false ]]; then
         echo "$time_stamp, EXTRACTION failed (all retries exhausted)" >> logs.csv
         exit 1
     fi
@@ -95,14 +100,19 @@ if [[ $loc1_time != 0 ]];
 then
 
     ### API fetch failure handler
-    MAX_RETRIES=3
-    for attempt in $(seq 1 $MAX_RETRIES); do
-        curl -s "wttr.in/$loc_1?format=j1" > weather_new_york.json && break
-        echo "$time_stamp, EXTRACTION warning (attempt $attempt of $MAX_RETRIES failed)" >> logs.csv
+    success=false
+
+    for attempt in $(seq 1 $MAX_ATTEMPTS); do
+        if curl -sf "wttr.in/$loc_1?format=j1" -o weather_new_york.json; then
+            success=true
+            break
+        fi
+
+        echo "$time_stamp, EXTRACTION warning (attempt $attempt of $MAX_ATTEMPTS failed)" >> logs.csv
         sleep 5
     done
 
-    if [[ $attempt == $MAX_RETRIES ]]; then
+    if [[ "$success" = false ]]; then
         echo "$time_stamp, EXTRACTION failed (all retries exhausted)" >> logs.csv
         exit 1
     fi
