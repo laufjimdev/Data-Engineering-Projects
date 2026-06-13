@@ -1,14 +1,139 @@
-This is a SQL + Python + Jupyter Notebooks Project that will help me solidify the skills I've been learning throught my Data Engineering studying path.
+# Chicago City Data Analysis Project
 
-This project is born as the continuation of my IBM SQL BASICS course, were they provided 3 data sets from Chicago state, census, schools scorecards and crimes data. With this project I intend to show my Python, SQL and visualization skills along with a data analysis of the data to answer curious questions.
-I will be documenting the challenges encountered during this journey and how I overcame them.
+## 🎯 Objective
 
-Challenges:
+Analyze Chicago census, school report card, and crime datasets using SQL, Python, and data visualization techniques. The goal of this project was to strengthen SQL skills learned during my Data Engineering studies while conducting a real-world investigation into the relationships between crime, education, and socioeconomic conditions across Chicago community areas.
 
--Crimes dataset was very large, the API had a 1,000 rows limit, had to find a way around it, so added a Limit clause to fetch all the data needed, also deleted from the dataset source columns that were irrelevant before loading, and added the chunk option to read_csv method to break it into smaller batches.
--Datasets for report cards only include years 2011 and 2012, had to filter data from other 2 tables to match the dates.
--Report card data had a lot of columns info that will not be needed for this project, so I excluded them from the data to be imported, reducing loading time.
--I ran into data quality issues during aggregation by community area, the grouped totals initially appeared inconsistent with the raw dataset. Further investigation identified the exact causes of the discrepancy. The CRIME_DATA table had 223 null values in the community_area column, it also had 6 records under community_area 0 which doesnt have any record in the SCHOOLS_DATA table. This means: 688,212 records could be successfully mapped to valid Chicago community areas, Approximately 99.97% of the dataset was geographically assignable.
--Learned about NULLIF fuction due to the need of filtering and casting the SCHOOLS_DATA.college_enrollment_rate column, certain schools had a NDA values.
--Learned about aggregate window functions due to the need of using an AVG value to qualify a result set without collapsing it.
--Learned about Matplotlib and Seaborn as part of the visualizations section of this project.
+---
+
+## 📊 Dataset
+
+This project uses three public Chicago datasets provided during the IBM SQL coursework:
+
+- **CENSUS_DATA** – Community demographics and hardship indexes.
+- **SCHOOLS_DATA** – School report cards, safety scores, attendance, and enrollment metrics.
+- **CRIME_DATA** – Historical crime incidents, crime types, arrests, and locations.
+
+### Data Preparation Challenges
+
+- Crime dataset exceeded API row limits and required pagination, filtering unnecessary columns, and loading data in chunks.
+- School report card data was only available for 2011–2012, requiring date alignment across datasets.
+- Large numbers of unused columns were removed to improve loading performance.
+- Data quality investigation revealed:
+  - 223 records with NULL community areas.
+  - 6 records assigned to community area `0`.
+  - ~99.97% of crime records could be successfully mapped to valid Chicago community areas.
+
+---
+
+## 🛠️ Tools Used
+
+- SQL (SQLite)
+- Python
+- Pandas
+- Matplotlib
+- Seaborn
+- Jupyter Notebooks
+
+Project Structure:
+
+```text
+04sql-chicago-city-analysis-project/
+│
+├── Notebooks/
+│   ├── 01_setup.ipynb
+│   ├── 02_sql_analysis.ipynb
+│   └── 03_visualizations.ipynb
+│
+└── README.md
+```
+
+---
+
+## 🔍 Key Findings
+
+### Crime Analysis
+
+- **Austin** recorded the highest number of crimes with **44,123 incidents**.
+- The most common crime types were:
+  1. Theft
+  2. Battery
+  3. Narcotics
+  4. Criminal Damage
+  5. Burglary
+
+- Approximately **27.16%** of crimes resulted in an arrest.
+- Streets, sidewalks, residences, and apartments accounted for the largest concentration of crimes.
+
+### School Analysis
+
+- Average school safety score: **49.5**
+- High Schools achieved the strongest average academic performance based on ISAT scores.
+- Attendance rates remained relatively high regardless of school safety scores, showing little direct relationship.
+
+### Cross-Dataset Analysis
+
+- High hardship areas generally showed **lower school safety scores**.
+- The relationship between hardship and crime was less clear when using raw crime counts; population size appears to be an important factor.
+- Communities appearing in both the **Top 10 Crime Areas** and **Bottom 10 School Safety Areas**:
+  - West Englewood
+  - Auburn Gresham
+  - Roseland
+
+- A general negative relationship was observed between hardship index and college enrollment.
+- Based on crime volume, hardship index, and school safety metrics, **Austin** emerged as the most at-risk community area.
+
+---
+
+## 📈 Visualizations
+
+The project includes visualizations exploring:
+
+- Crime distribution by community area.
+- Crime type frequency.
+- School safety score distributions.
+- Attendance vs. safety score relationships.
+- Hardship index vs. college enrollment.
+- Comparative community risk indicators.
+
+---
+
+## 🚀 How to Run
+
+1. Clone the repository.
+
+```bash
+git clone <repository-url>
+```
+
+2. Install dependencies.
+
+```bash
+pip install pandas matplotlib seaborn jupyter
+```
+
+3. Launch Jupyter Notebook.
+
+```bash
+jupyter notebook
+```
+
+4. Run notebooks in order:
+
+```text
+01_setup.ipynb
+02_sql_analysis.ipynb
+03_visualizations.ipynb
+```
+
+---
+
+## 📚 What I Learned
+
+- Writing complex SQL queries using CTEs, subqueries, joins, aggregations, and window functions.
+- Investigating and validating data quality issues before analysis.
+- Using `NULLIF()` and data type conversions to handle inconsistent data.
+- Applying aggregate window functions to compare records against dataset-wide metrics.
+- Building data visualizations with Matplotlib and Seaborn.
+- Combining multiple datasets to generate insights that cannot be observed from a single source alone.
+- Understanding the importance of defining proper metrics (e.g., crime rates per capita instead of raw counts) before drawing conclusions.
